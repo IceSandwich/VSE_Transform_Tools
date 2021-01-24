@@ -6,6 +6,7 @@ from .scale import PREV_OT_scale
 from .rotate import PREV_OT_rotate
 from .autocrop import PREV_OT_autocrop
 from .delete import PREV_OT_delete
+from .mute import PREV_OT_mute
 from .duplicate import PREV_OT_duplicate
 from .group import PREV_OT_group
 from .meta_toggle import PREV_OT_meta_toggle

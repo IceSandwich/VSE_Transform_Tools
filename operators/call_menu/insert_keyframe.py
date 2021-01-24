@@ -71,8 +71,9 @@ class PREV_OT_insert_keyframe(bpy.types.Operator):
                         data_path="max_y")
 
                 if self.ch[3] == 1:
+                    # Fixed bug: where is the cf from?
                     seq.keyframe_insert(
-                        data_path="blend_alpha", frame=cf)
+                        data_path="blend_alpha")
 
         # Apparently redrawing is bad...
         # bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)

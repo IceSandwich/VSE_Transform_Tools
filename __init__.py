@@ -1,9 +1,9 @@
 bl_info = {
     "name": "VSE Transform Tools",
     "description": "Quickly manipulate video strips in Blender's Video Sequence Editor",
-    "author": "kgeogeo, DoubleZ, doakey3, NathanLovato",
-    "version": (1, 2, 8),
-    "blender": (2, 80, 0),
+    "author": "kgeogeo, DoubleZ, doakey3, NathanLovato, tin2tin",
+    "version": (1, 2, 9),
+    "blender": (2, 83, 0),
     "wiki_url": "https://github.com/doakey3/VSE_Transform_Tools",
     "tracker_url": "https://github.com/doakey3/VSE_Transform_Tools/issues",
     "category": "Sequencer"
@@ -185,7 +185,7 @@ class vse_transform_tools_select(WorkSpaceTool):
         ("vse_transform_tools.select", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True},
          {"properties": []}),
         ("vse_transform_tools.select", {"type": 'A', "value": 'PRESS'},
-         {"properties": []}),
+         {"properties": []})
     )
 
     def draw_settings(context, layout, tool):
@@ -385,7 +385,7 @@ def init_properties():
 
     item_pivot_point = (
         ('0', 'Median Point', '', 'PIVOT_MEDIAN', 0),
-        ('1', 'Individual Origins', '', 'PIVOT_BOUNDBOX', 1),
+        ('1', 'Individual Origins', '', 'PIVOT_INDIVIDUAL', 1), # Fixed this little icon
         ('2', '2D Cursor', '', 'PIVOT_CURSOR', 2),
         ('3', 'Active Strip', '', 'PIVOT_ACTIVE', 3)
     )
@@ -418,15 +418,6 @@ def init_properties():
         items=get_tracker_list
         )
 
-def remove_properties():
-    del bpy.types.Scene.seq_cursor2d_loc
-    del bpy.types.Scene.seq_pivot_type
-    bpy.types.SEQUENCER_HT_header.remove(Add_Icon_Pivot_Point)
-    del bpy.types.Scene.vse_transform_tools_use_rotation
-    del bpy.types.Scene.vse_transform_tools_use_scale
-    del bpy.types.Scene.vse_transform_tools_tracker_1
-    del bpy.types.Scene.vse_transform_tools_tracker_2
-
 classes = [
     PREV_OT_initialize_pivot,
     PREV_OT_set_cursor_2d,
@@ -437,6 +428,7 @@ classes = [
     PREV_OT_rotate,
     PREV_OT_autocrop,
     PREV_OT_delete,
+    PREV_OT_mute,
     PREV_OT_duplicate,
     PREV_OT_group,
     PREV_OT_meta_toggle,
@@ -482,6 +474,8 @@ def register():
 
     kmi = km.keymap_items.new("vse_transform_tools.delete", "DEL", "PRESS", shift=True)
     kmi = km.keymap_items.new("vse_transform_tools.delete", "DEL", "PRESS")
+    
+    kmi = km.keymap_items.new("vse_transform_tools.mute", "H", "PRESS")
 
     kmi = km.keymap_items.new("vse_transform_tools.duplicate", "D", 'PRESS', shift=True)
 
@@ -526,13 +520,12 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
-    remove_properties()
-
     wm = bpy.context.window_manager
     for km in addon_keymaps:
         wm.keyconfigs.addon.keymaps.remove(km)
     addon_keymaps.clear()
 
+def unregister():
     bpy.utils.unregister_tool(vse_transform_tools_select)
     bpy.utils.unregister_tool(vse_transform_tools_grab)
     bpy.utils.unregister_tool(vse_transform_tools_rotate)

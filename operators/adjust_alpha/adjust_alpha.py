@@ -67,6 +67,7 @@ class PREV_OT_adjust_alpha(bpy.types.Operator):
             precision = 1
 
         self.fac = round(self.fac, precision)
+
         for strip in self.tab:
             strip.blend_alpha = self.fac
 
@@ -89,6 +90,7 @@ class PREV_OT_adjust_alpha(bpy.types.Operator):
 
             bpy.types.SpaceSequenceEditor.draw_handler_remove(
                 self.handle_alpha, 'PREVIEW')
+
             return {'FINISHED'}
 
         return {'RUNNING_MODAL'}
@@ -111,9 +113,9 @@ class PREV_OT_adjust_alpha(bpy.types.Operator):
                 if not strip.type == 'SOUND':
                     selected_strips.append(strip)
 
-            for strip in selected_strips:
-                self.tab.append(strip)
-                opacities.append(strip.blend_alpha)
+            # Fixed bug: 'adjust alpha' will affect other strips because of the self.tab
+            self.tab = selected_strips
+            opacities = [ strip.blend_alpha for strip in selected_strips ]
 
             self.alpha_init = max(opacities)
 

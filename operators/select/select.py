@@ -49,6 +49,11 @@ def draw_select(self, context):
         draw_line(vertices[3], vertices[0], 1, color)
 
 
+# support cross-selection
+prev_mouse_x = -1
+prev_mouse_y = -1
+current_selection_depth = 1
+
 class PREV_OT_select(bpy.types.Operator):
     """
     Selects a strip(s) when clicked
@@ -61,7 +66,7 @@ class PREV_OT_select(bpy.types.Operator):
     seconds = 0
     fadeout_duration = 100
     handle_select = None
-
+    
     @classmethod
     def poll(self, context):
         if context.scene.sequence_editor:
@@ -86,11 +91,21 @@ class PREV_OT_select(bpy.types.Operator):
 
     def invoke(self, context, event):
         #bpy.ops.vse_transform_tools.initialize_pivot()
+        global prev_mouse_x
+        global prev_mouse_y
+        global current_selection_depth
 
         scene = context.scene
 
         mouse_x = event.mouse_region_x
         mouse_y = event.mouse_region_y
+        
+        if mouse_x == prev_mouse_x and mouse_y == prev_mouse_y and not event.shift: # when click the same point as before
+            current_selection_depth += 1
+        else:
+            prev_mouse_x = mouse_x
+            prev_mouse_y = mouse_y 
+            current_selection_depth = 1
 
         mouse_vec = Vector([mouse_x, mouse_y])
         vector = mouse_to_res(mouse_vec)
@@ -102,6 +117,8 @@ class PREV_OT_select(bpy.types.Operator):
         selection_list = []
 
         strips = get_visible_strips()
+        
+        depth_counter = current_selection_depth
 
         if 'MOUSE' in event.type:
             for strip in reversed(strips):
@@ -117,7 +134,12 @@ class PREV_OT_select(bpy.types.Operator):
                     vector, bottom_left, top_left, top_right,
                     bottom_right)
 
-                if intersects and not event.type == 'A':
+                if intersects and not event.type == 'A' and not strip.mute: # ignore the hidden strip
+                    # support cross-selection
+                    depth_counter -= 1
+                    if depth_counter != 0:
+                        continue
+                        
                     selection_list.append(strip)
                     if not event.shift:
                         bpy.ops.sequencer.select_all(action='DESELECT')
@@ -132,21 +154,29 @@ class PREV_OT_select(bpy.types.Operator):
                         else:
                             strip.select = True
                             break
-                if not selection_list and not event.shift and not event.type == 'A':
-                    bpy.ops.sequencer.select_all(action='DESELECT')
+            
+            # when cross all selections. repeate it.
+            if depth_counter > 0:
+                prev_mouse_x = -1
+                prev_mouse_y = -1
+                current_selection_depth = 0
+                
+            if not selection_list and not event.shift and not event.type == 'A': # when u click the outside or depth_counter is not zero which makes selection_list empty
+                bpy.ops.sequencer.select_all(action='DESELECT')
 
-                if strip.blend_type in ['CROSS', 'REPLACE']:
-                    return {'FINISHED'}
+            if selection_list and selection_list[0].blend_type in ['CROSS', 'REPLACE']:
+                return {'FINISHED'}
 
         elif event.type == 'A':
-            all_selected = True
+            # Reverse select action. Type A to deselect. Type A again to select all.
+            all_not_selected = True
             for strip in strips:
-                if not strip.select:
-                    all_selected = False
+                if strip.select:
+                    all_not_selected = False
 
             bpy.ops.sequencer.select_all(action='DESELECT')
 
-            if not all_selected:
+            if all_not_selected:
                 for strip in strips:
                     strip.select = True
 

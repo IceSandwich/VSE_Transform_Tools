@@ -30,7 +30,9 @@ class PREV_OT_group(bpy.types.Operator):
                 if not child in selected:
                     selected.append(child)
 
-        left, right, bottom, top = get_group_box(selected)
+        # Do we really need to crop?
+        # left, right, bottom, top = get_group_box(selected)
+        left = right = bottom = top = 0
 
         res_x = context.scene.render.resolution_x
         res_y = context.scene.render.resolution_y
